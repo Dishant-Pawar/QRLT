@@ -34,28 +34,36 @@ export const paymentsRouter = createTRPCRouter({
   createPremiumCheckout: privateProcedure
     .input(createPremiumCheckoutSchema)
     .mutation(async ({ ctx, input }) => {
-      const language = input.language;
-      const translations = checkoutTranslations[language];
-      const newCheckout = await client.createCheckout({
-        checkout_data: {
-          custom: {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            userId: ctx.user.id,
+      try {
+        const language = input.language;
+        const translations = checkoutTranslations[language];
+        const newCheckout = await client.createCheckout({
+          checkout_data: {
+            custom: {
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              userId: ctx.user.id,
+            },
+            name: ctx.user.email || "",
+            email: ctx.user.email || "",
           },
-          name: ctx.user.email || "",
-          email: ctx.user.email || "",
-        },
-        checkout_options: {
-          embed: true,
-        },
-
-        store: env.LEMON_SQUEEZY_STORE_ID,
-        variant: env.LEMON_SQUEEZY_SUBSCRIPTION_VARIANT_ID,
-        product_options: translations,
-      });
-
-      return newCheckout.data.attributes.url;
+          checkout_options: {
+            embed: true,
+          },
+    
+          store: env.LEMON_SQUEEZY_STORE_ID,
+          variant: env.LEMON_SQUEEZY_SUBSCRIPTION_VARIANT_ID,
+          product_options: translations,
+        });
+    
+        return newCheckout.data.attributes.url;
+      } catch (error) {
+        console.error('Checkout creation failed:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Payment gateway communication failed',
+        });
+      }
     }),
   cancelSubscription: privateProcedure.mutation(async ({ ctx }) => {
     const subscription = await ctx.db.subscriptions.findFirst({
