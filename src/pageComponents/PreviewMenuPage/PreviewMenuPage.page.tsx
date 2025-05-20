@@ -16,7 +16,7 @@ export const PreviewMenuPage = ({
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  const { data, isLoading, error } = api.menus.getMenuBySlug.useQuery({ slug });
+  const { data, isLoading, error } = api.menus.getPublicMenuBySlug.useQuery({ slug });
 
   useHandleFetchError({
     error,
